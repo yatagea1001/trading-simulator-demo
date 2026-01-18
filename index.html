@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MarketTrade Yata gea</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    overscroll-behavior-y: none; 
+}
+
+#canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    touch-action: none; 
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    outline: none;
+}
+</style>
+
+<script>
+var Module = {
+    canvas: null,
+    onRuntimeInitialized: function () {
+        console.log("[WASM] Ready.");
+        if(Module.canvas) Module.canvas.focus();
+    }
+};
+</script>
+</head>
+
+<body>
+
+<canvas id="canvas" tabindex="1"></canvas> <script>
+Module.canvas = document.getElementById("canvas");
+</script>
+
+<script>
+window.notifyWASM_candle = function(o,h,l,c,t,v){
+    if (Module.ccall) Module.ccall("wasm_push_candle", null, ["number","number","number","number","number","number"], [o,h,l,c,t,v]);
+};
+
+window.notifyWASM_tick = function(price,time){
+    if (Module.ccall) Module.ccall("wasm_push_tick", null, ["number","number"], [price,time]);
+};
+</script>
+
+<script>
+window.addEventListener("beforeunload", function () {
+    if (Module && Module.FS) {
+        Module.FS.syncfs(false, function(err) { console.log("Sync before unload:", err); });
+    }
+});
+</script>
+
+<script src="websocket.js"></script>
+<script src="index.js"></script>
+
+<script>
+    var canvas = document.getElementById("canvas");
+    var isTouching = false; 
+
+    function getDPR() {
+        return window.devicePixelRatio || 1;
+    }
+
+    // ================================================
+    // ⌨️ KEYBOARD EVENTS (TAMBAHAN BARU)
+    // ================================================
+    
+    window.addEventListener('keydown', function(e) {
+        if (Module.ccall) {
+            // Kirim status tombol ditekan (1 = down)
+            Module.ccall('wasm_send_key', null, ['number', 'number'], [e.keyCode, 1]);
+        }
+        
+        // Mencegah Backspace membuat browser "Go Back"
+        // Mencegah Spasi membuat halaman scroll
+        if (e.keyCode === 8 || e.keyCode === 32) {
+            e.preventDefault();
+        }
+    }, false);
+
+    window.addEventListener('keyup', function(e) {
+        if (Module.ccall) {
+            Module.ccall('wasm_send_key', null, ['number', 'number'], [e.keyCode, 0]);
+        }
+    }, false);
+
+    window.addEventListener('keypress', function(e) {
+        if (Module.ccall) {
+            // Kirim karakter asli untuk diketik (huruf/angka)
+            Module.ccall('wasm_send_char', null, ['number'], [e.charCode]);
+        }
+    }, false);
+
+
+    // ================================================
+    // 🖱️ MOUSE EVENTS
+    // ================================================
+
+    canvas.addEventListener('mousemove', function(e) {
+        if (isTouching) return;
+        var rect = canvas.getBoundingClientRect();
+        var dpr = getDPR(); 
+        var x = (e.clientX - rect.left) * dpr;
+        var y = (e.clientY - rect.top) * dpr;
+        if (Module.ccall) Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
+    });
+
+    canvas.addEventListener('mousedown', function(e) {
+        canvas.focus(); // 🔥 PENTING: Klik canvas agar fokus keyboard aktif
+        if (isTouching) return;
+        var btn = e.button; 
+        if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [btn, 1]); 
+    }, {passive: false});
+
+    canvas.addEventListener('mouseup', function(e) {
+        if (isTouching) { isTouching = false; return; }
+        var btn = e.button;
+        if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [btn, 0]); 
+    }, {passive: false});
+
+    canvas.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        var delta = Math.sign(e.deltaY) * -1;
+        if (Module.ccall) Module.ccall('wasm_mouse_wheel', null, ['number'], [delta]);
+    }, {passive: false});
+
+    canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
+
+    // ================================================
+    // 📱 TOUCH EVENTS
+    // ================================================
+    var lastTouchX = null;
+    var lastTouchY = null;
+    var lastPinchDist = null;
+
+    function getPinchDist(t1, t2) {
+        return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+    }
+
+    canvas.addEventListener('touchstart', function(e) {
+        canvas.focus(); // 🔥 PENTING: Touch juga harus memicu fokus
+        if(e.cancelable && e.target === canvas) e.preventDefault();
+        isTouching = true;
+
+        var rect = canvas.getBoundingClientRect();
+        var dpr = getDPR(); 
+
+        if (e.touches.length === 1) {
+            var touch = e.touches[0];
+            var x = (touch.clientX - rect.left) * dpr;
+            var y = (touch.clientY - rect.top) * dpr;
+            lastTouchX = touch.clientX; 
+            lastTouchY = touch.clientY;
+            lastPinchDist = null;
+
+            if (Module.ccall) {
+                Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
+                Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 1]); 
+                Module.ccall('wasm_notify_touch_start', null, ['number', 'number'], [x, y]);
+            }
+        }
+        else if (e.touches.length === 2) {
+            if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
+            lastPinchDist = getPinchDist(e.touches[0], e.touches[1]);
+            lastTouchX = null; lastTouchY = null;
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', function(e) {
+        if (e.cancelable) e.preventDefault(); 
+        var rect = canvas.getBoundingClientRect();
+        var dpr = getDPR();
+
+        if (e.touches.length === 2 && lastPinchDist !== null) {
+            var currentDist = getPinchDist(e.touches[0], e.touches[1]);
+            var deltaZoom = currentDist - lastPinchDist;
+            if (Module.ccall) Module.ccall('wasm_zoom_chart', null, ['number'], [deltaZoom]);
+            lastPinchDist = currentDist; 
+        }
+        else if (e.touches.length === 1 && lastTouchX !== null && lastTouchY !== null) {
+            var touch = e.touches[0];
+            var deltaX = touch.clientX - lastTouchX;
+            var deltaY = touch.clientY - lastTouchY;
+            var canvasX = (touch.clientX - rect.left) * dpr;
+            var canvasY = (touch.clientY - rect.top) * dpr;
+
+            if (Module.ccall) {
+                Module.ccall('wasm_mouse_move', null, ['number', 'number'], [canvasX, canvasY]);
+                Module.ccall('wasm_pan_chart_pixels', null, ['number', 'number'], [deltaX, deltaY]);
+            }
+            lastTouchX = touch.clientX;
+            lastTouchY = touch.clientY;
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchend', function(e) {
+        if (e.cancelable) e.preventDefault();
+        if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
+
+        if (e.touches.length < 2) lastPinchDist = null;
+        if (e.touches.length === 0) {
+            lastTouchX = null;
+            lastTouchY = null;
+            setTimeout(() => { isTouching = false; }, 100); 
+        }
+    }, {passive: false});
+</script>
+</body>
+</html>
