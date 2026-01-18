@@ -3,58 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>YATA TRADER PRO - Demo Simulator</title>
+<title>YATA TRADER PRO - Simulator</title>
 
 <style>
-/* --- 1. RESET STANDAR BROWSER --- */
+/* --- 1. RESET --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 html, body {
-    width: 100%; height: 100%;
-    margin: 0; padding: 0;
-    overflow: hidden; /* Anti Scroll */
-    background-color: #000;
+    width: 100%; height: 100%; margin: 0; padding: 0;
+    overflow: hidden; background-color: #000;
     font-family: 'Segoe UI', sans-serif;
-    /* 🔥 PENTING: Matikan semua gesture bawaan browser (zoom/swipe back) */
-    touch-action: none; 
-    -webkit-user-select: none; /* Matikan blok teks */
-    user-select: none;
+    touch-action: none; -webkit-user-select: none; user-select: none;
 }
 
-/* --- 2. CANVAS STANDAR --- */
+/* --- 2. CANVAS UTAMA --- */
 canvas.emscripten {
-    position: absolute;
-    top: 0; left: 0;
+    position: absolute; top: 0; left: 0;
     width: 100%; height: 100%;
-    border: 0 none;
-    background-color: #000;
-    outline: none;
-    /* Hilangkan highlight biru saat tap di Android */
-    -webkit-tap-highlight-color: transparent; 
-    
-    /* 🔥 LANGSUNG MUNCUL (Tanpa Fade In Login) */
-    opacity: 1; 
+    border: 0 none; background-color: #000; outline: none;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0; /* Sembunyi dulu sebelum loading selesai */
+    transition: opacity 1s ease-in;
 }
 
-/* --- LOADING SPINNER --- */
-#loading-spinner {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    color: #0af; font-family: sans-serif; font-size: 14px; 
-    z-index: 9999; pointer-events: none;
-    font-weight: bold; letter-spacing: 1px;
+/* --- 3. LAYAR LOADING KEREN --- */
+#loading-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #050505; z-index: 9999;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    color: #0af;
+    transition: opacity 0.5s ease-out;
 }
+
+/* Spinner Putar */
+.spinner {
+    width: 50px; height: 50px;
+    border: 5px solid rgba(0, 170, 255, 0.2);
+    border-top: 5px solid #0af;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Kotak Progress Bar */
+.progress-container {
+    width: 300px; height: 6px;
+    background: #222; border-radius: 3px;
+    overflow: hidden; margin-bottom: 10px;
+}
+
+/* Isi Progress Bar (Bergerak) */
+#progress-fill {
+    width: 0%; height: 100%;
+    background: #0af;
+    transition: width 0.2s ease-out;
+    box-shadow: 0 0 10px #0af;
+}
+
+/* Teks Persen */
+#status-text {
+    font-size: 14px; letter-spacing: 1px; color: #888;
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="loading-spinner">
-    🚀 MEMUAT SIMULATOR...
+<div id="loading-screen">
+    <div class="spinner"></div>
+    <div class="progress-container">
+        <div id="progress-fill"></div>
+    </div>
+    <div id="status-text">Menyiapkan Engine... 0%</div>
 </div>
 
 <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 
 <script>
+    var statusElement = document.getElementById('status-text');
+    var progressElement = document.getElementById('progress-fill');
+    var loadingScreen = document.getElementById('loading-screen');
+    var canvasElement = document.getElementById('canvas');
+
     var Module = {
         preRun: [],
         postRun: [],
@@ -63,34 +95,77 @@ canvas.emscripten {
             canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. Reload page.'); e.preventDefault(); }, false);
             return canvas;
         })(),
-        onRuntimeInitialized: function() { 
-            console.log("[WASM] Engine Loaded."); 
-            
-            // 1. Hilangkan Loading Spinner
-            var spinner = document.getElementById('loading-spinner');
-            if(spinner) spinner.style.display = 'none';
 
-            // 2. 🔥 BYPASS LOGIN: Langsung beri sinyal ke C++ bahwa user sudah "Masuk"
-            // Agar chart langsung dirender tanpa menunggu input password
+        // --- FUNGSI MENGHITUNG PERSEN DOWNLOAD ---
+        setStatus: function(text) {
+            if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+            if (text === Module.setStatus.last.text) return;
+
+            // Regex untuk menangkap angka download dari Emscripten (Format: 12345/99999)
+            var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+(\.\d+)?)\)/);
+            
+            if (m) {
+                var now = Date.now();
+                if (now - Module.setStatus.last.time < 30) return; // Update jangan terlalu cepat
+                Module.setStatus.last.time = now;
+                Module.setStatus.last.text = text;
+                
+                // Hitung Persen
+                var current = parseInt(m[2]);
+                var total = parseInt(m[4]);
+                var percent = Math.round((current / total) * 100);
+
+                // Update UI
+                progressElement.style.width = percent + "%";
+                statusElement.innerText = "Mengunduh Data... " + percent + "%";
+            } else {
+                // Jika status bukan download (misal: "Running...")
+                if (text.length > 0) statusElement.innerText = text;
+            }
+        },
+
+        // --- KETIKA SELESAI LOAD 100% ---
+        onRuntimeInitialized: function() { 
+            console.log("[WASM] Engine Siap."); 
+
+            // 1. Ubah Teks jadi 'Selesai'
+            progressElement.style.width = "100%";
+            statusElement.innerText = "Membuka Aplikasi...";
+
+            // 2. Hilangkan Layar Loading
+            setTimeout(() => {
+                loadingScreen.style.opacity = "0"; // Fade out
+                setTimeout(() => { loadingScreen.style.display = "none"; }, 500); // Hapus total
+                
+                // Munculkan Canvas
+                canvasElement.style.opacity = "1";
+                canvasElement.focus();
+            }, 500);
+
+            // 3. Bypass Login (Langsung Masuk)
             if (Module._wasm_on_login_success) {
                 Module._wasm_on_login_success();
             }
 
-            // 3. Fokus ke canvas agar keyboard langsung jalan
-            document.getElementById("canvas").focus();
-
-            // 4. Koneksi WebSocket (Jika ada logic auto-connect untuk data dummy)
-            if (typeof connectWS === 'function') {
-                connectWS();
-            }
+            // 4. Connect WebSocket (jika ada)
+            if (typeof connectWS === 'function') connectWS();
+        },
+        
+        totalDependencies: 0,
+        monitorRunDependencies: function(left) {
+            this.totalDependencies = Math.max(this.totalDependencies, left);
+            // Bisa tambah logika status text disini jika mau
         }
     };
     
-    window.onerror = function(event) { console.error("Window Error: " + event); };
+    window.onerror = function(event) {
+        statusElement.innerText = "Error: " + event;
+        statusElement.style.color = "red";
+    };
 </script>
 
 <script>
-    // --- BRIDGE WASM ---
+    // --- BRIDGE WASM (Sama Seperti Sebelumnya) ---
     window.notifyWASM_candle = function(o,h,l,c,t,v){
         if (Module.ccall) Module.ccall("wasm_push_candle", null, ["number","number","number","number","number","number"], [o,h,l,c,t,v]);
     };
@@ -98,9 +173,7 @@ canvas.emscripten {
         if (Module.ccall) Module.ccall("wasm_push_tick", null, ["number","number"], [price,time]);
     };
     
-    // ====================================================================
-    // 🖱️ & 📱 SUPER NATIVE INPUT HANDLING (JARI = MOUSE)
-    // ====================================================================
+    // --- INPUT HANDLING (Sama Seperti Sebelumnya) ---
     var canvas = document.getElementById("canvas");
     var isTouching = false; 
     var lastTouchX = null, lastTouchY = null, lastPinchDist = null;
@@ -113,7 +186,7 @@ canvas.emscripten {
         return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     }
 
-    // --- 1. MOUSE (PC) ---
+    // MOUSE
     canvas.addEventListener('mousemove', function(e) {
         if (isTouching) return; 
         var rect = canvas.getBoundingClientRect(); var s = getScale();
@@ -133,7 +206,7 @@ canvas.emscripten {
     }, {passive: false});
     canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
 
-    // --- 2. TOUCH (MOBILE) ---
+    // TOUCH
     canvas.addEventListener('touchstart', function(e) {
         if(e.cancelable) e.preventDefault(); 
         isTouching = true;
@@ -144,9 +217,7 @@ canvas.emscripten {
             var touch = e.touches[0];
             var x = (touch.clientX - rect.left) * s.x;
             var y = (touch.clientY - rect.top) * s.y;
-            
             lastTouchX = touch.clientX; lastTouchY = touch.clientY; lastPinchDist = null;
-
             if (Module.ccall) {
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
                 Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 1]); 
@@ -175,7 +246,6 @@ canvas.emscripten {
             var y = (touch.clientY - rect.top) * s.y;
             var deltaX = touch.clientX - lastTouchX; 
             var deltaY = touch.clientY - lastTouchY;
-
             if (Module.ccall) {
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
                 Module.ccall('wasm_pan_chart_pixels', null, ['number', 'number'], [deltaX, deltaY]);
@@ -194,7 +264,7 @@ canvas.emscripten {
         }
     }, {passive: false});
 
-    // --- KEYBOARD HANDLING ---
+    // KEYBOARD
     window.addEventListener('keydown', function(e) {
         if (!Module.ccall) return;
         if (e.keyCode === 8 || e.keyCode === 9) e.preventDefault(); 
