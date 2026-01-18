@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+
 <title>YATA TRADER PRO - Simulator</title>
 
 <style>
@@ -34,8 +40,6 @@ canvas.emscripten {
     color: #0af;
     transition: opacity 0.5s ease-out;
 }
-
-/* Spinner Putar */
 .spinner {
     width: 50px; height: 50px;
     border: 5px solid rgba(0, 170, 255, 0.2);
@@ -45,26 +49,36 @@ canvas.emscripten {
     margin-bottom: 20px;
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* Kotak Progress Bar */
 .progress-container {
     width: 300px; height: 6px;
     background: #222; border-radius: 3px;
     overflow: hidden; margin-bottom: 10px;
 }
-
-/* Isi Progress Bar (Bergerak) */
 #progress-fill {
     width: 0%; height: 100%;
     background: #0af;
     transition: width 0.2s ease-out;
     box-shadow: 0 0 10px #0af;
 }
+#status-text { font-size: 14px; letter-spacing: 1px; color: #888; }
 
-/* Teks Persen */
-#status-text {
-    font-size: 14px; letter-spacing: 1px; color: #888;
+/* --- 4. TOMBOL FULLSCREEN (POJOK KANAN ATAS) --- */
+#btn-fullscreen {
+    position: fixed; top: 15px; right: 15px;
+    width: 40px; height: 40px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #0af;
+    font-size: 20px;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer;
+    z-index: 5000; /* Di atas canvas */
+    transition: background 0.3s;
+    opacity: 0; /* Muncul setelah loading selesai */
+    pointer-events: none;
 }
+#btn-fullscreen:hover { background: rgba(0, 170, 255, 0.2); border-color: #0af; }
 
 </style>
 </head>
@@ -73,11 +87,11 @@ canvas.emscripten {
 
 <div id="loading-screen">
     <div class="spinner"></div>
-    <div class="progress-container">
-        <div id="progress-fill"></div>
-    </div>
+    <div class="progress-container"><div id="progress-fill"></div></div>
     <div id="status-text">Menyiapkan Engine... 0%</div>
 </div>
+
+<div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
 
 <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 
@@ -86,6 +100,20 @@ canvas.emscripten {
     var progressElement = document.getElementById('progress-fill');
     var loadingScreen = document.getElementById('loading-screen');
     var canvasElement = document.getElementById('canvas');
+    var btnFull = document.getElementById('btn-fullscreen');
+
+    // --- FUNGSI FULLSCREEN ---
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
 
     var Module = {
         preRun: [],
@@ -96,65 +124,45 @@ canvas.emscripten {
             return canvas;
         })(),
 
-        // --- FUNGSI MENGHITUNG PERSEN DOWNLOAD ---
+        // --- HITUNG PERSEN DOWNLOAD ---
         setStatus: function(text) {
             if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
             if (text === Module.setStatus.last.text) return;
-
-            // Regex untuk menangkap angka download dari Emscripten (Format: 12345/99999)
             var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+(\.\d+)?)\)/);
-            
             if (m) {
                 var now = Date.now();
-                if (now - Module.setStatus.last.time < 30) return; // Update jangan terlalu cepat
+                if (now - Module.setStatus.last.time < 30) return; 
                 Module.setStatus.last.time = now;
                 Module.setStatus.last.text = text;
-                
-                // Hitung Persen
-                var current = parseInt(m[2]);
-                var total = parseInt(m[4]);
+                var current = parseInt(m[2]); var total = parseInt(m[4]);
                 var percent = Math.round((current / total) * 100);
-
-                // Update UI
                 progressElement.style.width = percent + "%";
                 statusElement.innerText = "Mengunduh Data... " + percent + "%";
             } else {
-                // Jika status bukan download (misal: "Running...")
                 if (text.length > 0) statusElement.innerText = text;
             }
         },
 
-        // --- KETIKA SELESAI LOAD 100% ---
+        // --- KETIKA SELESAI LOAD ---
         onRuntimeInitialized: function() { 
             console.log("[WASM] Engine Siap."); 
-
-            // 1. Ubah Teks jadi 'Selesai'
             progressElement.style.width = "100%";
             statusElement.innerText = "Membuka Aplikasi...";
 
-            // 2. Hilangkan Layar Loading
             setTimeout(() => {
-                loadingScreen.style.opacity = "0"; // Fade out
-                setTimeout(() => { loadingScreen.style.display = "none"; }, 500); // Hapus total
+                loadingScreen.style.opacity = "0"; 
+                setTimeout(() => { loadingScreen.style.display = "none"; }, 500); 
                 
-                // Munculkan Canvas
                 canvasElement.style.opacity = "1";
                 canvasElement.focus();
+                
+                // Munculkan Tombol Fullscreen
+                btnFull.style.opacity = "1";
+                btnFull.style.pointerEvents = "auto";
             }, 500);
 
-            // 3. Bypass Login (Langsung Masuk)
-            if (Module._wasm_on_login_success) {
-                Module._wasm_on_login_success();
-            }
-
-            // 4. Connect WebSocket (jika ada)
+            if (Module._wasm_on_login_success) Module._wasm_on_login_success();
             if (typeof connectWS === 'function') connectWS();
-        },
-        
-        totalDependencies: 0,
-        monitorRunDependencies: function(left) {
-            this.totalDependencies = Math.max(this.totalDependencies, left);
-            // Bisa tambah logika status text disini jika mau
         }
     };
     
@@ -165,15 +173,21 @@ canvas.emscripten {
 </script>
 
 <script>
-    // --- BRIDGE WASM (Sama Seperti Sebelumnya) ---
+    // --- INPUT HANDLING (Sama, Tidak Ada Perubahan) ---
+    // Copy bagian bridge wasm, mouse, touch, dan keyboard dari kode sebelumnya ke sini
+    // (Bagian ini sama persis dengan yang sudah jalan, supaya tidak kepanjangan saya singkat di chat ini)
+    // TAPI PASTIIN KAMU TETAP PAKAI LOGIKA INPUT YANG TADI YA!
+    
     window.notifyWASM_candle = function(o,h,l,c,t,v){
         if (Module.ccall) Module.ccall("wasm_push_candle", null, ["number","number","number","number","number","number"], [o,h,l,c,t,v]);
     };
     window.notifyWASM_tick = function(price,time){
         if (Module.ccall) Module.ccall("wasm_push_tick", null, ["number","number"], [price,time]);
     };
-    
-    // --- INPUT HANDLING (Sama Seperti Sebelumnya) ---
+
+   // ====================================================================
+    // 🖱️ & 📱 SUPER NATIVE INPUT HANDLING (JARI = MOUSE)
+    // ====================================================================
     var canvas = document.getElementById("canvas");
     var isTouching = false; 
     var lastTouchX = null, lastTouchY = null, lastPinchDist = null;
@@ -186,18 +200,19 @@ canvas.emscripten {
         return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     }
 
-    // MOUSE
+    // --- 1. MOUSE (PC) ---
+    // Kita cegat Mouse Event jika user sedang pakai Touchscreen (supaya tidak double click)
     canvas.addEventListener('mousemove', function(e) {
         if (isTouching) return; 
         var rect = canvas.getBoundingClientRect(); var s = getScale();
         if (Module.ccall) Module.ccall('wasm_mouse_move', null, ['number', 'number'], [(e.clientX - rect.left)*s.x, (e.clientY - rect.top)*s.y]);
     });
     canvas.addEventListener('mousedown', function(e) {
-        if (isTouching) { e.preventDefault(); return; }
+        if (isTouching) { e.preventDefault(); return; } // 🔥 Stop Ghost Click
         if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [e.button, 1]); 
     }, {passive: false});
     canvas.addEventListener('mouseup', function(e) {
-        if (isTouching) { e.preventDefault(); return; }
+        if (isTouching) { e.preventDefault(); return; } // 🔥 Stop Ghost Click
         if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [e.button, 0]); 
     }, {passive: false});
     canvas.addEventListener('wheel', function(e) {
@@ -206,24 +221,34 @@ canvas.emscripten {
     }, {passive: false});
     canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
 
-    // TOUCH
+    // --- 2. TOUCH (JARI -> MOUSE SIMULATOR) ---
+    // Ini rahasianya agar drawing berfungsi saat disentuh
+    
     canvas.addEventListener('touchstart', function(e) {
-        if(e.cancelable) e.preventDefault(); 
+        if(e.cancelable) e.preventDefault(); // 🔥 Matikan scroll/zoom browser
         isTouching = true;
         
         var rect = canvas.getBoundingClientRect(); var s = getScale();
 
         if (e.touches.length === 1) {
+            // SINGLE TOUCH (Simulasi Mouse Kiri Klik)
             var touch = e.touches[0];
             var x = (touch.clientX - rect.left) * s.x;
             var y = (touch.clientY - rect.top) * s.y;
+            
             lastTouchX = touch.clientX; lastTouchY = touch.clientY; lastPinchDist = null;
+
             if (Module.ccall) {
+                // 🔥 LANGKAH 1: Teleport Kursor Mouse Virtual ke posisi jari DULUAN
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
+                // 🔥 LANGKAH 2: Baru tekan tombol "Klik Kiri" (1 = Down)
                 Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 1]); 
+                
+                // Opsional: Kirim raw touch start buat logic lain
                 Module.ccall('wasm_notify_touch_start', null, ['number', 'number'], [x, y]);
             }
         } else if (e.touches.length === 2) {
+            // DUAL TOUCH (Zoom / Pan - Lepas Klik Mouse)
             if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
             lastPinchDist = getPinchDist(e.touches[0], e.touches[1]);
             lastTouchX = null; lastTouchY = null;
@@ -235,19 +260,28 @@ canvas.emscripten {
         var rect = canvas.getBoundingClientRect(); var s = getScale();
 
         if (e.touches.length === 2 && lastPinchDist !== null) {
+            // --- ZOOM LOGIC ---
             var currentDist = getPinchDist(e.touches[0], e.touches[1]);
             var deltaZoom = (currentDist - lastPinchDist) * s.x;
             if (Module.ccall) Module.ccall('wasm_zoom_chart', null, ['number'], [deltaZoom]);
             lastPinchDist = currentDist; 
         } 
         else if (e.touches.length === 1 && lastTouchX !== null) {
+            // --- DRAG / DRAW LOGIC ---
             var touch = e.touches[0];
             var x = (touch.clientX - rect.left) * s.x;
             var y = (touch.clientY - rect.top) * s.y;
+            
+            // Hitung delta untuk Pan Chart
             var deltaX = touch.clientX - lastTouchX; 
             var deltaY = touch.clientY - lastTouchY;
+
             if (Module.ccall) {
+                // 1. Update posisi mouse virtual (PENTING BUAT DRAWING TOOLS)
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
+                
+                // 2. Kirim sinyal Pan (Geser Chart) 
+                // Catatan: Di main.cpp, pastikan logika "Jika sedang Drawing, Jangan Pan Chart"
                 Module.ccall('wasm_pan_chart_pixels', null, ['number', 'number'], [deltaX, deltaY]);
             }
             lastTouchX = touch.clientX; lastTouchY = touch.clientY;
@@ -256,10 +290,14 @@ canvas.emscripten {
 
     canvas.addEventListener('touchend', function(e) {
         if (e.cancelable) e.preventDefault();
+        
+        // 🔥 LEPAS KLIK MOUSE (0 = Up)
         if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
+        
         if (e.touches.length < 2) lastPinchDist = null;
         if (e.touches.length === 0) { 
             lastTouchX = null; lastTouchY = null; 
+            // Reset status touch sedikit delay untuk mencegah ghost click mouse
             setTimeout(() => { isTouching = false; }, 300); 
         }
     }, {passive: false});
@@ -279,7 +317,6 @@ canvas.emscripten {
         if (!Module.ccall) return;
         Module.ccall('wasm_send_char', null, ['number'], [e.charCode]);
     });
-
 </script>
 
 <script src="websocket.js"></script>    
