@@ -7,6 +7,7 @@ Project ini adalah **SIMULATOR TRADING** untuk tujuan demonstrasi teknologi WebA
 * Data candle yang ditampilkan adalah data statis/dummy.
 * Jangan gunakan indikator di sini sebagai acuan finansial.
 
+  https://yatagea1001.github.io/trading-simulator-demo/
 ---
 ### Fitur dalam Demo ini:
 * Chart rendering menggunakan Imgui/ImplotC++ & OpenGL (Wasm).
