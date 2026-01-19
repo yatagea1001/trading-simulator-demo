@@ -9,7 +9,28 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
 
-<title>YATA TRADER PRO - Simulator</title>
+<!-- SEO META TAGS -->
+<title>Trading Simulator Market Forex Backtest WebAssembly | YATA TRADER PRO</title>
+<meta name="description" content="YATA TRADER PRO adalah simulator trading dan backtest berbasis WebAssembly untuk market forex, crypto, dan saham. Cari: trading, market, simulator, forex, backtest, webassembly.">
+<meta name="keywords" content="trading, trading simulator, market, forex, backtest, webassembly, crypto, saham, trading online, backtest strategi, webassembly trading, yatagea1001, bgaimana">
+
+<!-- SCHEMA.ORG for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "YATA TRADER PRO - Trading Simulator",
+  "applicationCategory": "FinancialApplication",
+  "operatingSystem": "All",
+  "description": "Simulator trading dan backtest berbasis WebAssembly untuk market forex, crypto, dan saham.",
+  "keywords": "trading, trading simulator, market, forex, backtest, webassembly, crypto, saham, trading online",
+  "url": "https://yatagea1001.github.io/trading-simulator-demo/",
+  "creator": {
+    "@type": "Person",
+    "name": "yatagea1001"
+  }
+}
+</script>
 
 <style>
 /* --- 1. RESET --- */
@@ -84,6 +105,16 @@ canvas.emscripten {
 </head>
 
 <body>
+<!-- Keyword block untuk perayap & search engine -->
+<div style="position:absolute;left:-9999px;top:-9999px;visibility:hidden;">
+  trading, market, simulator, forex, backtest, webassembly, crypto, saham, trading online, yatagea1001, YATA TRADER PRO, test strategi, backtesting, analisa pasar, perdagangan, aplikasi finansial, web assembly, aplikasi simulator trading.
+  YATA TRADER PRO, simulator trading online berbasis webassembly dengan kemampuan backtest strategi di market forex, crypto, saham.
+</div>
+
+<!-- Description visible (boleh dihapus jika tidak mau tampil, tapi baik untuk SEO modern) -->
+<div style="text-align:center; color:#0af; font-size:18px; margin-top:10px;">
+  <strong>YATA TRADER PRO</strong> – Simulator Trading, Market, Forex, Backtest, WebAssembly
+</div>
 
 <div id="loading-screen">
     <div class="spinner"></div>
@@ -174,9 +205,6 @@ canvas.emscripten {
 
 <script>
     // --- INPUT HANDLING (Sama, Tidak Ada Perubahan) ---
-    // Copy bagian bridge wasm, mouse, touch, dan keyboard dari kode sebelumnya ke sini
-    // (Bagian ini sama persis dengan yang sudah jalan, supaya tidak kepanjangan saya singkat di chat ini)
-    // TAPI PASTIIN KAMU TETAP PAKAI LOGIKA INPUT YANG TADI YA!
     
     window.notifyWASM_candle = function(o,h,l,c,t,v){
         if (Module.ccall) Module.ccall("wasm_push_candle", null, ["number","number","number","number","number","number"], [o,h,l,c,t,v]);
@@ -222,16 +250,13 @@ canvas.emscripten {
     canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
 
     // --- 2. TOUCH (JARI -> MOUSE SIMULATOR) ---
-    // Ini rahasianya agar drawing berfungsi saat disentuh
-    
     canvas.addEventListener('touchstart', function(e) {
-        if(e.cancelable) e.preventDefault(); // 🔥 Matikan scroll/zoom browser
+        if(e.cancelable) e.preventDefault();
         isTouching = true;
         
         var rect = canvas.getBoundingClientRect(); var s = getScale();
 
         if (e.touches.length === 1) {
-            // SINGLE TOUCH (Simulasi Mouse Kiri Klik)
             var touch = e.touches[0];
             var x = (touch.clientX - rect.left) * s.x;
             var y = (touch.clientY - rect.top) * s.y;
@@ -239,16 +264,11 @@ canvas.emscripten {
             lastTouchX = touch.clientX; lastTouchY = touch.clientY; lastPinchDist = null;
 
             if (Module.ccall) {
-                // 🔥 LANGKAH 1: Teleport Kursor Mouse Virtual ke posisi jari DULUAN
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
-                // 🔥 LANGKAH 2: Baru tekan tombol "Klik Kiri" (1 = Down)
                 Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 1]); 
-                
-                // Opsional: Kirim raw touch start buat logic lain
                 Module.ccall('wasm_notify_touch_start', null, ['number', 'number'], [x, y]);
             }
         } else if (e.touches.length === 2) {
-            // DUAL TOUCH (Zoom / Pan - Lepas Klik Mouse)
             if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
             lastPinchDist = getPinchDist(e.touches[0], e.touches[1]);
             lastTouchX = null; lastTouchY = null;
@@ -260,28 +280,20 @@ canvas.emscripten {
         var rect = canvas.getBoundingClientRect(); var s = getScale();
 
         if (e.touches.length === 2 && lastPinchDist !== null) {
-            // --- ZOOM LOGIC ---
             var currentDist = getPinchDist(e.touches[0], e.touches[1]);
             var deltaZoom = (currentDist - lastPinchDist) * s.x;
             if (Module.ccall) Module.ccall('wasm_zoom_chart', null, ['number'], [deltaZoom]);
             lastPinchDist = currentDist; 
         } 
         else if (e.touches.length === 1 && lastTouchX !== null) {
-            // --- DRAG / DRAW LOGIC ---
             var touch = e.touches[0];
             var x = (touch.clientX - rect.left) * s.x;
             var y = (touch.clientY - rect.top) * s.y;
-            
-            // Hitung delta untuk Pan Chart
             var deltaX = touch.clientX - lastTouchX; 
             var deltaY = touch.clientY - lastTouchY;
 
             if (Module.ccall) {
-                // 1. Update posisi mouse virtual (PENTING BUAT DRAWING TOOLS)
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
-                
-                // 2. Kirim sinyal Pan (Geser Chart) 
-                // Catatan: Di main.cpp, pastikan logika "Jika sedang Drawing, Jangan Pan Chart"
                 Module.ccall('wasm_pan_chart_pixels', null, ['number', 'number'], [deltaX, deltaY]);
             }
             lastTouchX = touch.clientX; lastTouchY = touch.clientY;
@@ -290,14 +302,10 @@ canvas.emscripten {
 
     canvas.addEventListener('touchend', function(e) {
         if (e.cancelable) e.preventDefault();
-        
-        // 🔥 LEPAS KLIK MOUSE (0 = Up)
         if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
-        
         if (e.touches.length < 2) lastPinchDist = null;
         if (e.touches.length === 0) { 
             lastTouchX = null; lastTouchY = null; 
-            // Reset status touch sedikit delay untuk mencegah ghost click mouse
             setTimeout(() => { isTouching = false; }, 300); 
         }
     }, {passive: false});
