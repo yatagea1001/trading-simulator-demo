@@ -1,7 +1,5 @@
 # MarketTrade Simulator Trading (DEMO VERSION)
 
-⚠️ **PERINGATAN / WARNING** ⚠️
-
 Project ini adalah **SIMULATOR TRADING** untuk tujuan demonstrasi teknologi WebAssembly.
 * **Bukan untuk trading asli (Not for live trading).**
 * Data candle yang ditampilkan adalah data statis/dummy.
@@ -10,7 +8,7 @@ Project ini adalah **SIMULATOR TRADING** untuk tujuan demonstrasi teknologi WebA
   https://yatagea1001.github.io/trading-simulator-demo/
 ---
 ### Fitur dalam Demo ini:
-* Chart rendering menggunakan Imgui/ImplotC++ & OpenGL (Wasm).
+* Chart rendering menggunakan Imgui/Implot C++ & OpenGL (Wasm).
 * Simulasi Buy/Sell.
 * Analisa Candle Stick.
 * Replay Multi Timefrime.
