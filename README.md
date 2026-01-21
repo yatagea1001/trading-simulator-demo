@@ -25,7 +25,7 @@ Ini Adalah Projeck Mandiri **TRADING SIMULATOR ENGINE** berbasis **C++** yang di
 ### Demo Langsung
 Coba langsung di sini:  
 **[https://yatagea1001.github.io/trading-simulator-demo/](https://yatagea1001.github.io/trading-simulator-demo/)**
-![Preview](preview.png)
+![Preview](preview.jpg)
 ### Teknologi
 - **Core**: C++ (Emscripten → WebAssembly)
 - **UI/Chart**: Dear ImGui + ImPlot + OpenGL ES
