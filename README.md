@@ -2,7 +2,16 @@
 
 **YATA** – Simulator Trading, Market, Forex, Backtest, WebAssembly ⛶
 
-Project Mandiri ini adalah **TRADING SIMULATOR ENGINE** berbasis **C++** yang di-compile ke **WebAssembly (WASM)** untuk berjalan langsung di browser tanpa install apa pun. Fokus utama: simulasi trading XAUUSD (Gold) Mukti timeframe dengan charting canggih, drawing tools, dan backtest.
+Ini Adalah Projeck Mandiri **TRADING SIMULATOR ENGINE** berbasis **C++** yang di-compile ke **WebAssembly (WASM)** untuk berjalan langsung di browser tanpa install apa pun. Fokus utama: simulasi trading XAUUSD (Gold) Mukti timeframe dengan charting canggih, drawing tools, dan backtest.
+
+
+🛠️ Technical Highlights (Sisi Engineering)
+- Berbeda dengan library charting berbasis JavaScript biasa, engine ini menggunakan pendekatan Low-Level:
+- GPU-Accelerated Rendering: Menggunakan OpenGL ES (via WebGL) untuk merender ribuan candlestick secara instan tanpa lag.
+- WASM Memory Management: Optimasi alokasi memori C++ di browser untuk menangani data tick yang padat.
+- Custom Graphics Engine: Engine grafik dibangun menggunakan Dear ImGui dan ImPlot, memberikan kontrol penuh atas setiap pixel di layar.
+- Real-time Data Pipeline: Sinkronisasi data via WebSockets dengan sistem caching IndexedDB untuk performa yang tetap stabil meski koneksi tidak stabil.
+- Native Touch Interface: Implementasi manual logika gesture (zoom, pan, pinch) untuk pengalaman pengguna yang setara dengan aplikasi mobile native.
 
 ### Fitur Utama (DEMO)
 - Chart candlestick real-time + replay mode (multi-timeframe M1/M5/H1/H4)
