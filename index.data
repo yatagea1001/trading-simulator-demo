@@ -4721,10 +4721,14 @@ public:
     double equity = 10000.0;
     const double CONTRACT_SIZE = 100.0; 
 
-    void OpenTrade(TradeType type, double price, double vol, double time, bool pending) {
-        trades.emplace_back(nextId++, "XAUUSD", type, price, vol, time, pending);
+    // 🔥 UPDATE: Tambahkan parameter 'std::string symbol' di depan
+    void OpenTrade(std::string symbol, TradeType type, double price, double vol, double time, bool pending) {
+        
+        // 🔥 UPDATE: Jangan hardcode "XAUUSD", tapi pakai variabel 'symbol'
+        trades.emplace_back(nextId++, symbol, type, price, vol, time, pending);
+        
         g_SelectedTradeID = nextId - 1; 
-        std::cout << "Open Trade #" << (nextId-1) << std::endl;
+        std::cout << "✅ Open Trade #" << (nextId-1) << " Pair: " << symbol << std::endl;
     }
 
     void RenderAllVisuals() {
