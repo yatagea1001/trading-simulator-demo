@@ -41,7 +41,15 @@ Coba langsung di sini:
 3. Chart akan load data dummy/statis dulu, lalu connect ke server WS kalau ada.
 
 ### Catatan Penting
-- Data candle yang ditampilkan adalah **data dummy/statis** untuk demo.
+- Data candle yang ditampilkan adalah **data Asli m1 OHLC Resampling Menjadi htf Bedasarkan Waktu Perdetik 
+std::vector<std::pair<std::string,int>> targets = {
+    {"M5", 300},
+    {"M15",900},
+    {"M30",1800},
+    {"H1",3600},
+    {"H4",14400}
+    {"TF",detik.....}
+};/statis** untuk demo.
 - Bukan untuk trading asli (Not for live trading).
 - Project masih dalam pengembangan – feedback welcome!
 
