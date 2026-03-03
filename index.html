@@ -1,154 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#000000">
-
-  <!-- GOOGLE SITE VERIFICATION (PASTIKAN INI ADA!) -->
-  <meta name="google-site-verification" content="6ZI0296VH8WI2JYfKR-3QCDv9uz28kFn-96M71_8oBI" />
-
-  <!-- SEO META TAGS -->
-  <title>Trading Simulator Market Forex Backtest WebAssembly | YATA TRADER PRO</title>
-  <meta name="description" content="YATA TRADER PRO adalah simulator trading dan backtest berbasis WebAssembly untuk market forex, crypto, dan saham. Cari: trading, market, simulator, forex, backtest, webassembly.">
-  <meta name="keywords" content="trading, trading simulator, market, forex, backtest, webassembly, crypto, saham, trading online, backtest strategi, webassembly trading, yatagea1001, bgaimana">
-
-  <!-- SCHEMA.ORG for Google -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Trading Simulator",
-    "applicationCategory": "FinancialApplication",
-    "operatingSystem": "All",
-    "description": "Simulator trading dan backtest berbasis WebAssembly untuk market forex, crypto, dan saham.",
-    "keywords": "trading, trading simulator, market, forex, backtest, webassembly, crypto, saham, trading online",
-    "url": "https://yatagea1001.github.io/trading-simulator-demo/",
-    "creator": {
-      "@type": "Person",
-      "name": "yatagea1001"
-    }
-  }
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>YATA TRADER PRO - Intelligent Engine</title>
 
 <style>
-/* --- 1. RESET --- */
+/* --- 1. RESET STANDAR BROWSER --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
 html, body {
-    width: 100%; height: 100%; margin: 0; padding: 0;
-    overflow: hidden; background-color: #000;
-    font-family: 'Segoe UI', sans-serif;
-    touch-action: none; -webkit-user-select: none; user-select: none;
-}
-
-/* --- 2. CANVAS UTAMA --- */
-canvas.emscripten {
-    position: absolute; top: 0; left: 0;
     width: 100%; height: 100%;
-    border: 0 none; background-color: #000; outline: none;
-    -webkit-tap-highlight-color: transparent;
-    opacity: 0; /* Sembunyi dulu sebelum loading selesai */
-    transition: opacity 1s ease-in;
+    margin: 0; padding: 0;
+    overflow: hidden; /* Anti Scroll */
+    background-color: #000;
+    font-family: 'Segoe UI', sans-serif;
+    /* 🔥 PENTING: Matikan semua gesture bawaan browser (zoom/swipe back) */
+    touch-action: none; 
+    -webkit-user-select: none; /* Matikan blok teks */
+    user-select: none;
 }
 
-/* --- 3. LAYAR LOADING KEREN --- */
-#loading-screen {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #050505; z-index: 9999;
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    color: #0af;
-    transition: opacity 0.5s ease-out;
+/* --- 2. CANVAS STANDAR IMGUI WEB --- */
+canvas.emscripten {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0 none;
+    background-color: #000;
+    outline: none;
+    /* 🔥 Hilangkan highlight biru saat tap di Android */
+    -webkit-tap-highlight-color: transparent; 
+    opacity: 0; 
+    transition: opacity 2s ease;
 }
-.spinner {
-    width: 50px; height: 50px;
-    border: 5px solid rgba(0, 170, 255, 0.2);
-    border-top: 5px solid #0af;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.progress-container {
-    width: 300px; height: 6px;
-    background: #222; border-radius: 3px;
-    overflow: hidden; margin-bottom: 10px;
-}
-#progress-fill {
-    width: 0%; height: 100%;
-    background: #0af;
-    transition: width 0.2s ease-out;
-    box-shadow: 0 0 10px #0af;
-}
-#status-text { font-size: 14px; letter-spacing: 1px; color: #888; }
 
-/* --- 4. TOMBOL FULLSCREEN (POJOK KANAN ATAS) --- */
-#btn-fullscreen {
-    position: fixed; top: 15px; right: 15px;
-    width: 40px; height: 40px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid #333;
-    border-radius: 8px;
-    color: #0af;
-    font-size: 20px;
-    display: flex; justify-content: center; align-items: center;
+/* --- 👻 CLASS HANTU (RAHASIA TEMBUS PANDANG) --- */
+/* Pakai class ini di div overlay (judul, fps, watermark) */
+.overlay-ghost {
+    pointer-events: none !important; /* Tembus sentuhan! */
+}
+/* Pakai class ini di TOMBOL HTML (Chat, Login) biar bisa diklik */
+.overlay-interactive {
+    pointer-events: auto !important; 
     cursor: pointer;
-    z-index: 5000; /* Di atas canvas */
-    transition: background 0.3s;
-    opacity: 0; /* Muncul setelah loading selesai */
-    pointer-events: none;
 }
-#btn-fullscreen:hover { background: rgba(0, 170, 255, 0.2); border-color: #0af; }
+
+/* --- UI LOGIN (GATEWAY) --- */
+#login-gateway {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 9999; display: flex; overflow: hidden; 
+    pointer-events: none; /* Container login tembus pandang */
+}
+/* Anak elemen login harus bisa diklik */
+#login-gateway > * { pointer-events: auto; }
+
+.gate {
+    position: absolute; width: 50%; height: 100%;
+    background: #111; border: 1px solid #222;
+    transition: transform 1.5s cubic-bezier(0.7, 0, 0.3, 1);
+}
+.gate-left { left: 0; border-right: 2px solid #0af; }
+.gate-right { right: 0; border-left: 2px solid #0af; }
+
+.gate-open .gate-left { transform: translateX(-100%); }
+.gate-open .gate-right { transform: translateX(100%); }
+
+#auth-container {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000; background: rgba(26, 26, 26, 0.95);
+    padding: 40px; border-radius: 12px;
+    width: 320px; border: 1px solid #333;
+    color: white; text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.auth-fade-out { opacity: 0; transform: translate(-50%, -60%); pointer-events: none; }
+
+h2 { margin-bottom: 25px; color: #0af; letter-spacing: 2px; font-size: 20px; }
+input {
+    width: 100%; padding: 12px; margin: 10px 0;
+    background: #111; border: 1px solid #444; border-radius: 6px; color: white;
+}
+input:focus { border-color: #0af; outline: none; }
+button {
+    width: 100%; padding: 14px; margin-top: 15px;
+    background: #0af; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+}
+button:hover { background: #008ccb; }
+.toggle-link { margin-top: 20px; font-size: 13px; color: #888; cursor: pointer; }
+#auth-msg { color: #ff5555; font-size: 12px; margin-top: 10px; min-height: 15px; }
 
 </style>
 </head>
 
 <body>
-<!-- Keyword block untuk perayap & search engine -->
-<div style="position:absolute;left:-9999px;top:-9999px;visibility:hidden;">
-  trading, market, simulator, forex, backtest, webassembly, crypto, saham, trading online, yatagea1001, YATA TRADER PRO, test strategi, backtesting, analisa pasar, perdagangan, aplikasi finansial, web assembly, aplikasi simulator trading.
-  YATA TRADER PRO, simulator trading online berbasis webassembly dengan kemampuan backtest strategi di market forex, crypto, saham.
+<div id="loading-spinner" style="
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: #0af; font-family: sans-serif; font-size: 14px; z-index: 1; pointer-events: none;">
 </div>
-
-<!-- Description visible (boleh dihapus jika tidak mau tampil, tapi baik untuk SEO modern) -->
-<div style="text-align:center; color:#0af; font-size:18px; margin-top:10px;">
-  <strong>YATA TRADER PRO</strong> – Simulator Trading, Market, Forex, Backtest, WebAssembly
+<div id="login-gateway">
+    <div class="gate gate-left"></div>
+    <div class="gate gate-right"></div>
+    <div id="auth-container">
+        <h2 id="form-title">SELAMAT DATANG GAYS</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="handleAuth()" id="btn-auth">MASUK</button>
+        <p id="auth-msg"></p>
+        <div class="toggle-link" id="toggle-text" onclick="toggleMode()">Belum punya akun? Daftar di sini</div>
+    </div>
 </div>
-
-<div id="loading-screen">
-    <div class="spinner"></div>
-    <div class="progress-container"><div id="progress-fill"></div></div>
-    <div id="status-text">Menyiapkan Engine... 0%</div>
-</div>
-
-<div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
 
 <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 
 <script>
-    var statusElement = document.getElementById('status-text');
-    var progressElement = document.getElementById('progress-fill');
-    var loadingScreen = document.getElementById('loading-screen');
-    var canvasElement = document.getElementById('canvas');
-    var btnFull = document.getElementById('btn-fullscreen');
-
-    // --- FUNGSI FULLSCREEN ---
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-            });
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-    }
-
     var Module = {
         preRun: [],
         postRun: [],
@@ -157,66 +124,73 @@ canvas.emscripten {
             canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. Reload page.'); e.preventDefault(); }, false);
             return canvas;
         })(),
-
-        // --- HITUNG PERSEN DOWNLOAD ---
-        setStatus: function(text) {
-            if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
-            if (text === Module.setStatus.last.text) return;
-            var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+(\.\d+)?)\)/);
-            if (m) {
-                var now = Date.now();
-                if (now - Module.setStatus.last.time < 30) return; 
-                Module.setStatus.last.time = now;
-                Module.setStatus.last.text = text;
-                var current = parseInt(m[2]); var total = parseInt(m[4]);
-                var percent = Math.round((current / total) * 100);
-                progressElement.style.width = percent + "%";
-                statusElement.innerText = "Mengunduh Data... " + percent + "%";
-            } else {
-                if (text.length > 0) statusElement.innerText = text;
-            }
-        },
-
-        // --- KETIKA SELESAI LOAD ---
-        onRuntimeInitialized: function() { 
-            console.log("[WASM] Engine Siap."); 
-            progressElement.style.width = "100%";
-            statusElement.innerText = "Membuka Aplikasi...";
-
-            setTimeout(() => {
-                loadingScreen.style.opacity = "0"; 
-                setTimeout(() => { loadingScreen.style.display = "none"; }, 500); 
-                
-                canvasElement.style.opacity = "1";
-                canvasElement.focus();
-                
-                // Munculkan Tombol Fullscreen
-                btnFull.style.opacity = "1";
-                btnFull.style.pointerEvents = "auto";
-            }, 500);
-
-            if (Module._wasm_on_login_success) Module._wasm_on_login_success();
-            if (typeof connectWS === 'function') connectWS();
-        }
-    };
-    
-    window.onerror = function(event) {
-        statusElement.innerText = "Error: " + event;
-        statusElement.style.color = "red";
-    };
+       onRuntimeInitialized: function() { 
+        console.log("[WASM] Engine Loaded."); 
+        // HILANGKAN TULISAN LOADING
+        var spinner = document.getElementById('loading-spinner');
+        if(spinner) spinner.style.display = 'none';
+    }
+};
+    window.onerror = function(event) { console.error("Window Error: " + event); };
 </script>
 
 <script>
-    // --- INPUT HANDLING (Sama, Tidak Ada Perubahan) ---
-    
+    // --- LOGIKA LOGIN (SAMA SEPERTI SEBELUMNYA) ---
+    let isRegisterMode = false;
+    function toggleMode() {
+        isRegisterMode = !isRegisterMode;
+        document.getElementById("form-title").innerText = isRegisterMode ? "BUAT AKUN" : "SELAMAT DATANG DI PROJECK YATA";
+        document.getElementById("btn-auth").innerText = isRegisterMode ? "DAFTAR SEKARANG" : "LOGIN";
+        document.getElementById("toggle-text").innerText = isRegisterMode ? "Kembali ke Login" : "Belum punya akun? Daftar sini";
+        document.getElementById("auth-msg").innerText = "";
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById("email").value;
+        const pass = document.getElementById("password").value;
+        const endpoint = isRegisterMode ? "register" : "login";
+        const msgBox = document.getElementById("auth-msg");
+
+        if(!email || !pass) { msgBox.innerText = "Please fill all fields"; return; }
+
+        try {
+              //const response = await fetch(`/api/${endpoint}`, {
+           const response = await fetch(`http://127.0.0.1:5001/api/${endpoint}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email, password: pass })
+            });
+            const data = await response.json();
+
+            if (data.status === "success") {
+                if (isRegisterMode) {
+                    alert("Registration Successful!"); toggleMode();
+                } else {
+                    document.getElementById("auth-container").classList.add("auth-fade-out");
+                    setTimeout(() => {
+                        document.getElementById("login-gateway").classList.add("gate-open");
+                        document.getElementById("canvas").style.opacity = "1"; 
+                        document.getElementById("canvas").focus();
+                    }, 500);
+
+                    setTimeout(() => {
+                        if (Module._wasm_on_login_success) Module._wasm_on_login_success();
+                        if (typeof connectWS === 'function') connectWS();
+                        setTimeout(() => document.getElementById("login-gateway").remove(), 2000);
+                    }, 1000);
+                }
+            } else { msgBox.innerText = data.message; }
+        } catch (error) { msgBox.innerText = "Connection Gagal"; console.error(error); }
+    }
+
+    // --- BRIDGE WASM ---
     window.notifyWASM_candle = function(o,h,l,c,t,v){
         if (Module.ccall) Module.ccall("wasm_push_candle", null, ["number","number","number","number","number","number"], [o,h,l,c,t,v]);
     };
     window.notifyWASM_tick = function(price,time){
         if (Module.ccall) Module.ccall("wasm_push_tick", null, ["number","number"], [price,time]);
     };
-
-   // ====================================================================
+    
+    // ====================================================================
     // 🖱️ & 📱 SUPER NATIVE INPUT HANDLING (JARI = MOUSE)
     // ====================================================================
     var canvas = document.getElementById("canvas");
@@ -253,13 +227,16 @@ canvas.emscripten {
     canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
 
     // --- 2. TOUCH (JARI -> MOUSE SIMULATOR) ---
+    // Ini rahasianya agar drawing berfungsi saat disentuh
+    
     canvas.addEventListener('touchstart', function(e) {
-        if(e.cancelable) e.preventDefault();
+        if(e.cancelable) e.preventDefault(); // 🔥 Matikan scroll/zoom browser
         isTouching = true;
         
         var rect = canvas.getBoundingClientRect(); var s = getScale();
 
         if (e.touches.length === 1) {
+            // SINGLE TOUCH (Simulasi Mouse Kiri Klik)
             var touch = e.touches[0];
             var x = (touch.clientX - rect.left) * s.x;
             var y = (touch.clientY - rect.top) * s.y;
@@ -267,11 +244,16 @@ canvas.emscripten {
             lastTouchX = touch.clientX; lastTouchY = touch.clientY; lastPinchDist = null;
 
             if (Module.ccall) {
+                // 🔥 LANGKAH 1: Teleport Kursor Mouse Virtual ke posisi jari DULUAN
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
+                // 🔥 LANGKAH 2: Baru tekan tombol "Klik Kiri" (1 = Down)
                 Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 1]); 
+                
+                // Opsional: Kirim raw touch start buat logic lain
                 Module.ccall('wasm_notify_touch_start', null, ['number', 'number'], [x, y]);
             }
         } else if (e.touches.length === 2) {
+            // DUAL TOUCH (Zoom / Pan - Lepas Klik Mouse)
             if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
             lastPinchDist = getPinchDist(e.touches[0], e.touches[1]);
             lastTouchX = null; lastTouchY = null;
@@ -283,20 +265,28 @@ canvas.emscripten {
         var rect = canvas.getBoundingClientRect(); var s = getScale();
 
         if (e.touches.length === 2 && lastPinchDist !== null) {
+            // --- ZOOM LOGIC ---
             var currentDist = getPinchDist(e.touches[0], e.touches[1]);
             var deltaZoom = (currentDist - lastPinchDist) * s.x;
             if (Module.ccall) Module.ccall('wasm_zoom_chart', null, ['number'], [deltaZoom]);
             lastPinchDist = currentDist; 
         } 
         else if (e.touches.length === 1 && lastTouchX !== null) {
+            // --- DRAG / DRAW LOGIC ---
             var touch = e.touches[0];
             var x = (touch.clientX - rect.left) * s.x;
             var y = (touch.clientY - rect.top) * s.y;
+            
+            // Hitung delta untuk Pan Chart
             var deltaX = touch.clientX - lastTouchX; 
             var deltaY = touch.clientY - lastTouchY;
 
             if (Module.ccall) {
+                // 1. Update posisi mouse virtual (PENTING BUAT DRAWING TOOLS)
                 Module.ccall('wasm_mouse_move', null, ['number', 'number'], [x, y]);
+                
+                // 2. Kirim sinyal Pan (Geser Chart) 
+                // Catatan: Di main.cpp, pastikan logika "Jika sedang Drawing, Jangan Pan Chart"
                 Module.ccall('wasm_pan_chart_pixels', null, ['number', 'number'], [deltaX, deltaY]);
             }
             lastTouchX = touch.clientX; lastTouchY = touch.clientY;
@@ -305,15 +295,31 @@ canvas.emscripten {
 
     canvas.addEventListener('touchend', function(e) {
         if (e.cancelable) e.preventDefault();
-        if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
+        
         if (e.touches.length < 2) lastPinchDist = null;
+        
         if (e.touches.length === 0) { 
-            lastTouchX = null; lastTouchY = null; 
-            setTimeout(() => { isTouching = false; }, 300); 
+            lastTouchX = null; lastTouchY = null;
+
+            // 🔥 FIX: Langsung reset semua state touch di C++ tanpa delay
+            // Dulu pakai setTimeout 300ms → g_isTouchActive nyangkut di true
+            // Sekarang langsung reset → scale Y tidak "ingat" state lama
+            if (Module.ccall) {
+                // Reset klik mouse
+                Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
+                // Reset semua touch state (g_isTouchActive, isResizingY, deltas, dll)
+                Module.ccall('wasm_notify_touch_end', null, [], []);
+            }
+
+            // Reset flag JS juga langsung (tanpa delay)
+            isTouching = false;
+        } else {
+            // Masih ada jari lain di layar → cukup lepas mouse click
+            if (Module.ccall) Module.ccall('wasm_mouse_click', null, ['number', 'number'], [0, 0]);
         }
     }, {passive: false});
 
-    // --- KEYBOARD HANDLING ---
+   // --- KEYBOARD HANDLING ---
     window.addEventListener('keydown', function(e) {
         // 🔥 TAMBAHKAN CEK: isWasmReady (Pastikan variable ini global/bisa diakses)
         // Atau cek Module.ccall
@@ -334,8 +340,9 @@ canvas.emscripten {
 </script>
 
 <script src="websocket.js"></script>    
-<script src="index.js"></script>
-<script src="my_dev_logic.js"></script>
 
+<script src="index.js"></script>
+
+<script src="my_dev_logic.js"></script>
 </body>
 </html>
