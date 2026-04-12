@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>YATA TRADER PRO - Intelligent Engine</title>
+<title>Intelligent Engine</title>
 
 <style>
 /* --- 1. RESET STANDAR BROWSER --- */
@@ -100,11 +100,11 @@ button:hover { background: #008ccb; }
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
     color: #0af; font-family: sans-serif; font-size: 14px; z-index: 1; pointer-events: none;">
 </div>
-<div id="login-gateway">
+<div id="login-gateway" style="display:none;">
     <div class="gate gate-left"></div>
     <div class="gate gate-right"></div>
     <div id="auth-container">
-        <h2 id="form-title">SELAMAT DATANG GAYS</h2>
+        <h2 id="form-title">MY PROJECT TRADER</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button onclick="handleAuth()" id="btn-auth">MASUK</button>
@@ -125,10 +125,18 @@ button:hover { background: #008ccb; }
             return canvas;
         })(),
        onRuntimeInitialized: function() { 
-        console.log("[WASM] Engine Loaded."); 
-        // HILANGKAN TULISAN LOADING
+        console.log("[WASM] Engine Loaded.");
         var spinner = document.getElementById('loading-spinner');
         if(spinner) spinner.style.display = 'none';
+
+        // 🔥 GUEST MODE: Langsung masuk tanpa login
+        var gateway = document.getElementById('login-gateway');
+        if (gateway) gateway.style.display = 'none';
+        var cv = document.getElementById('canvas');
+        if (cv) { cv.style.opacity = '1'; cv.focus(); }
+
+        if (Module._wasm_on_login_success) Module._wasm_on_login_success();
+        if (typeof connectWS === 'function') connectWS();
     }
 };
     window.onerror = function(event) { console.error("Window Error: " + event); };
@@ -339,10 +347,13 @@ button:hover { background: #008ccb; }
 
 </script>
 
-<script src="websocket.js"></script>    
+<script src="websocket.js"></script>
+<script src="websocket_orderflow.js"></script>
+<script src="data_check.js"></script>
 
 <script src="index.js"></script>
 
 <script src="my_dev_logic.js"></script>
+<script src="ob_tutorial.js"></script>
 </body>
 </html>
