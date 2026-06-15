@@ -24,7 +24,7 @@ Ini Adalah Projeck Mandiri **TRADING SIMULATOR ENGINE** berbasis **C++** yang di
 
 ### Demo Langsung
 Coba langsung di sini:  
-**[https://yatagea1001.github.io/trading-simulator-demo/](https://yatagea1001.github.io/trading-simulator-demo/)**
+**[https://yatagea1001.github.io/trading-simulator-demo/](https://yatagea1001.github.io/MarketTradeVew/)**
 ![Preview](preview.jpg)
 <video src="https://github.com/username/repo/raw/main/video_demo.mp4" controls width="100%"></video>
 
